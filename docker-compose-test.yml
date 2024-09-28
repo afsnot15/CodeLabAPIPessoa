@@ -1,0 +1,35 @@
+services:
+  api-pessoa-test:
+    container_name: api-pessoa-test
+    build:
+      context: .docker/node/
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=test
+    entrypoint: .docker/node/entrypoint.sh
+    ports:
+      - '3004:3004'
+      - '7004:7004'
+    volumes:
+      - .:/home/node/app
+    depends_on:
+      db-pessoa-test:
+        condition: service_healthy
+
+  db-pessoa-test:
+    container_name: db-pessoa-test
+    build:
+      context: ./.docker/postgres
+      dockerfile: Dockerfile
+    command: postgres -c log_statement=all -p 5004
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=api-pessoa-test
+    ports:
+      - '5004:5004'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -p 5004']
+      interval: 5s
+      timeout: 5s
+      retries: 5
